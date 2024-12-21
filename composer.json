@@ -1,0 +1,41 @@
+{
+    "name": "phenaproxima/drupal-launcher",
+    "require": {
+        "guzzlehttp/guzzle": "^7.9",
+        "symfony/process": "^7.2",
+        "symfony/filesystem": "^7.2",
+        "symfony/console": "^7.2",
+        "pear/archive_tar": "^1.5"
+    },
+    "require-dev": {
+        "crazywhalecc/static-php-cli": "^2.4",
+        "symfony/finder": "^7.2"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Drupal\\Launcher\\": "src/"
+        }
+    },
+    "scripts-descriptions": {
+        "build:phar": "Builds the launcher as phar file.",
+        "build:php": "Builds the minimal PHP interpreter necesssary to execute the phar file.",
+        "build:native": "Builds the launcher as a native binary."
+    },
+    "scripts": {
+        "build:phar": [
+            "@php --define phar.readonly=0 ./build-phar.php"
+        ],
+        "build:php": [
+            "@putenv PHP_EXTENSIONS=curl,openssl,phar,zip,zlib",
+            "test -d source || spc download --with-php=8.3 --for-extensions \"$PHP_EXTENSIONS\" --prefer-pre-built",
+            "test -d buildroot || spc build --build-cli --build-micro \"$PHP_EXTENSIONS\""
+        ],
+        "build:native": [
+            "@build:phar",
+            "@build:php",
+            "spc micro:combine launcher.phar -O launcher"
+        ],
+        "reset": "rm -r -f bin cms"
+    }
+}
