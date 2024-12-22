@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\Launcher;
 
-use Laravel\Prompts\Output\ConsoleOutput;
 use Symfony\Component\Console\Input\StringInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class Launcher

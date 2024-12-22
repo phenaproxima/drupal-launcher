@@ -4,8 +4,7 @@
         "guzzlehttp/guzzle": "^7.9",
         "symfony/process": "^7.2",
         "symfony/filesystem": "^7.2",
-        "symfony/console": "^7.2",
-        "pear/archive_tar": "^1.5"
+        "symfony/console": "^7.2"
     },
     "require-dev": {
         "crazywhalecc/static-php-cli": "^2.4",
@@ -24,10 +23,12 @@
     },
     "scripts": {
         "build:phar": [
-            "@php --define phar.readonly=0 ./build-phar.php"
+            "@composer dump-autoload --no-dev --optimize",
+            "@php --define phar.readonly=0 ./build-phar.php",
+            "@composer dump-autoload"
         ],
         "build:php": [
-            "@putenv PHP_EXTENSIONS=curl,openssl,phar,zip,zlib",
+            "@putenv PHP_EXTENSIONS=curl,phar",
             "test -d source || spc download --with-php=8.3 --for-extensions \"$PHP_EXTENSIONS\" --prefer-pre-built",
             "test -d buildroot || spc build --build-cli --build-micro \"$PHP_EXTENSIONS\""
         ],
