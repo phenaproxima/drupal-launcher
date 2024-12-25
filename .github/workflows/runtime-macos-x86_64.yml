@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
 
       # Install macOS missing packages and mark os suffix
-      - run: brew install automake gzip
+      - run: brew install automake coreutils gzip
 
 
       - name: "Setup PHP"
