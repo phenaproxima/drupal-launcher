@@ -1,9 +1,9 @@
-# Builds a Drupal 11-ready PHP interpreter for macOS arm64.
+# Builds a Drupal 11-ready PHP interpreter for macOS x86_64.
 # The built interpreter only supports the CLI SAPI and a hard-coded list
 # of extensions needed for running Drupal and Composer.
-# Forked from https://raw.githubusercontent.com/crazywhalecc/static-php-cli/refs/heads/main/.github/workflows/build-macos-aarch64.yml.
+# Forked from https://raw.githubusercontent.com/crazywhalecc/static-php-cli/refs/heads/main/.github/workflows/build-macos-x86_64.yml.
 # See https://www.drupal.org/docs/getting-started/system-requirements/php-requirements#extensions
-name: Drupal runtime for macOS arm64
+name: Drupal runtime for macOS x86_64
 
 on:
   workflow_dispatch:
@@ -13,8 +13,8 @@ env:
 
 jobs:
   build:
-    name: Build PHP 8.3 for macOS arm64
-    runs-on: macos-14
+    name: Build PHP 8.3 for macOS x86_64
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
@@ -38,7 +38,7 @@ jobs:
 
       - name: Generate hashed key for download cache
         run: |
-          INPUT_HASH=$(echo "${{ runner.os }}-8.3-${{ env.PHP_EXTENSIONS }}-arm64" | sha256sum | awk '{print $1}')
+          INPUT_HASH=$(echo "${{ runner.os }}-8.3-${{ env.PHP_EXTENSIONS }}-x86_64" | sha256sum | awk '{print $1}')
           echo "INPUT_HASH=${INPUT_HASH}" >> $GITHUB_ENV
 
       # Cache downloaded source
