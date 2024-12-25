@@ -58,7 +58,7 @@ jobs:
       # Upload cli executable
       - uses: actions/upload-artifact@v4
         with:
-          name: php-8.3-macos
+          name: php-8.3-macos-arm64
           path: buildroot/bin/php
 
       # Upload extensions metadata
