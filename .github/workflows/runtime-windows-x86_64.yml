@@ -1,0 +1,63 @@
+# Builds a Drupal 11-ready PHP interpreter for Windows.
+# The built interpreter only supports the CLI SAPI and a hard-coded list
+# of extensions needed for running Drupal and Composer.
+# Forked from https://raw.githubusercontent.com/crazywhalecc/static-php-cli/refs/heads/main/.github/workflows/build-windows-x86_64.yml.
+# See https://www.drupal.org/docs/getting-started/system-requirements/php-requirements#extensions
+name: Drupal runtime for Windows
+
+on:
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    name: Build PHP 8.3 for Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: composer install
+
+      - run: echo "PHP_EXTENSIONS=bz2,ctype,curl,dom,filter,gd,iconv,mbstring,opcache,openssl,pdo,pdo_sqlite,phar,session,simplexml,sqlite3,tokenizer,xml,xmlwriter,yaml,zip,zlib" >> $env:GITHUB_ENV
+
+      - name: Generate hashed key for download cache
+        shell: bash
+        run: |
+          INPUT_HASH=$(echo "${{ runner.os }}-8.3-${{ env.PHP_EXTENSIONS }}" | sha256sum | awk '{print $1}')
+          echo "INPUT_HASH=${INPUT_HASH}" >> "$GITHUB_ENV"
+
+      # Cache downloaded source
+      - id: cache-download
+        uses: actions/cache@v4
+        with:
+          path: downloads
+          key: php-${{ env.INPUT_HASH }}
+
+      - run: ./vendor/bin/spc doctor
+
+      # If there's no dependencies cache, fetch sources, with or without debug
+      - if: steps.cache-download.outputs.cache-hit != 'true'
+        run: ./vendor/bin/spc download --with-php="8.3" --for-extensions="${{ env.PHP_EXTENSIONS }}" --debug --prefer-pre-built
+
+      # Run build command
+      - run: ./vendor/bin/spc build "${{ env.PHP_EXTENSIONS }}" --debug --build-cli
+
+      # Upload cli executable
+      - uses: actions/upload-artifact@v4
+        with:
+          name: php-8.3-windows
+          path: buildroot/bin/php.exe
+
+      # Upload extensions metadata
+      - uses: actions/upload-artifact@v4
+        with:
+          name: license-files
+          path: buildroot/license/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-meta
+          path: |
+            buildroot/build-extensions.json
+            buildroot/build-libraries.json
