@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fd08c5d4cb88890f67271dd4a736888a",
+    "content-hash": "8b8eb9c06fe9119b186de3c462295b38",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -1367,16 +1367,16 @@
     "packages-dev": [
         {
             "name": "crazywhalecc/static-php-cli",
-            "version": "2.4.2",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/crazywhalecc/static-php-cli.git",
-                "reference": "bad28fa2637e3f744962e9bf840da1c92850fecd"
+                "reference": "78aea56de479f9818843ab851a6fe5f51e9998d7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/crazywhalecc/static-php-cli/zipball/bad28fa2637e3f744962e9bf840da1c92850fecd",
-                "reference": "bad28fa2637e3f744962e9bf840da1c92850fecd",
+                "url": "https://api.github.com/repos/crazywhalecc/static-php-cli/zipball/78aea56de479f9818843ab851a6fe5f51e9998d7",
+                "reference": "78aea56de479f9818843ab851a6fe5f51e9998d7",
                 "shasum": ""
             },
             "require": {
@@ -1396,6 +1396,7 @@
                 "phpstan/phpstan": "^1.10",
                 "phpunit/phpunit": "^10.3 || ^9.5"
             },
+            "default-branch": true,
             "bin": [
                 "bin/spc"
             ],
@@ -1422,7 +1423,7 @@
             "description": "Build single static PHP binary, with PHP project together, with popular extensions included.",
             "support": {
                 "issues": "https://github.com/crazywhalecc/static-php-cli/issues",
-                "source": "https://github.com/crazywhalecc/static-php-cli/tree/2.4.2"
+                "source": "https://github.com/crazywhalecc/static-php-cli/tree/main"
             },
             "funding": [
                 {
@@ -1430,7 +1431,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2024-12-13T08:23:21+00:00"
+            "time": "2024-12-20T04:18:34+00:00"
         },
         {
             "name": "illuminate/collections",
@@ -1923,7 +1924,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "crazywhalecc/static-php-cli": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {},
