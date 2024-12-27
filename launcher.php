@@ -95,8 +95,7 @@ if (! is_dir($projectRoot)) {
     ];
     $flags = $settings['project']['flags'] ?? null;
     if ($flags) {
-        $flags = explode(' ', $flags);
-        $command = array_merge($command, ...$flags);
+        $command = array_push($command, ...explode(' ', $flags));
     }
     new Process($command)
         ->setTimeout(300)

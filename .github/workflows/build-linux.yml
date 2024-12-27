@@ -37,7 +37,7 @@ jobs:
 
       - run: composer install
 
-      - name: Generate hashed key for download cache
+      - name: Generate cache key
         run: |
           INPUT_HASH=$(echo "${{ runner.os }}-${{ env.PHP_VERSION }}-${{ env.PHP_EXTENSIONS }}-${{ matrix.arch }}" | sha256sum | awk '{print $1}')
           echo "INPUT_HASH=${INPUT_HASH}" >> $GITHUB_ENV
@@ -47,7 +47,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: downloads
-          key: php-${{ env.INPUT_HASH }}
+          key: sources-${{ env.INPUT_HASH }}
+
+      # Cache the Drupal-ready PHP interpreter.
+      - id: cache-runtime
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BUILD_WORKING_DIR }}/buildroot/bin/php
+          key: runtime-${{ env.INPUT_HASH }}
+
+      # Cache the minimal PHP interpreter.
+      - id: cache-micro
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BUILD_WORKING_DIR }}/buildroot/bin/micro.sfx
+          key: micro-${{ runner.os }}-${{ env.SPC_USE_ARCH }}
 
       # Fetch the source code for PHP's dependencies if they aren't already cached.
       - if: steps.cache-download.outputs.cache-hit != 'true'
@@ -56,18 +70,20 @@ jobs:
 
       - run: mkdir -p ./drupal-launcher/bin
 
-      # Build the Drupal-ready PHP interpreter and move it into `bin`.
-      - name: Build Drupal-ready PHP interpreter
+      # Build the Drupal-ready PHP interpreter and copy it into `bin`.
+      - if: steps.cache-runtime.outputs.cache-hit != 'true'
+        name: Build Drupal-ready PHP interpreter
         run: |
           ./bin/spc-alpine-docker build ${{ env.PHP_EXTENSIONS }} --build-cli
-          mv ${{ env.BUILD_WORKING_DIR }}/buildroot/bin/php ${{ github.workspace }}/drupal-launcher/bin
+          cp ${{ env.BUILD_WORKING_DIR }}/buildroot/bin/php ${{ github.workspace }}/drupal-launcher/bin
         working-directory: ${{ env.BUILD_WORKING_DIR }}
 
       # Copy the installed version of Composer into `bin`.
       - run: cp $(which composer) ./drupal-launcher/bin
 
       # Build the launcher's minimal PHP interpreter.
-      - name: Build minimal PHP interpreter
+      - if: steps.cache-micro.outputs.cache-hit != 'true'
+        name: Build minimal PHP interpreter
         run: ./bin/spc-alpine-docker build --build-micro phar
         working-directory: ${{ env.BUILD_WORKING_DIR }}
 

@@ -38,7 +38,7 @@ jobs:
 
       - run: composer install
 
-      - name: Generate hashed key for download cache
+      - name: Generate cache key
         run: |
           ARCH=$(uname -m)
           INPUT_HASH=$(echo "${{ runner.os }}-${{ env.PHP_VERSION }}-${{ env.PHP_EXTENSIONS }}-${{ env.ARCH }}" | sha256sum | awk '{print $1}')
@@ -50,7 +50,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: downloads
-          key: php-${{ env.INPUT_HASH }}
+          key: sources-${{ env.INPUT_HASH }}
+
+      # Cache the Drupal-ready PHP interpreter.
+      - id: cache-runtime
+        uses: actions/cache@v4
+        with:
+          path: buildroot/bin/php
+          key: runtime-${{ env.INPUT_HASH }}
+
+      # Cache the minimal PHP interpreter.
+      - id: cache-micro
+        uses: actions/cache@v4
+        with:
+          path: buildroot/bin/micro.sfx
+          key: micro-${{ runner.os }}-${{ env.ARCH }}
 
       # Fetch the source code for PHP's dependencies if they aren't already cached.
       - if: steps.cache-download.outputs.cache-hit != 'true'
@@ -58,25 +72,27 @@ jobs:
 
       - run: mkdir -p ./drupal-launcher/bin
 
-      # Build the Drupal-ready PHP interpreter and move it into `bin`.
-      - name: Build Drupal-ready PHP interpreter
+      # Build the Drupal-ready PHP interpreter and copy it into `bin`.
+      - if: steps.cache-runtime.outputs.cache-hit != 'true'
+        name: Build Drupal-ready PHP interpreter
         run: |
           ./vendor/bin/spc build ${{ env.PHP_EXTENSIONS }} --build-cli
-          mv ./buildroot/bin/php ./drupal-launcher/bin
+          cp ./buildroot/bin/php ./drupal-launcher/bin
 
       # Copy the installed version of Composer into `bin`.
       - run: cp $(which composer) ./drupal-launcher/bin
 
       # Build the launcher's minimal PHP interpreter.
-      - name: Build minimal PHP interpreter
+      - if: steps.cache-micro.outputs.cache-hit != 'true'
+        name: Build minimal PHP interpreter
         run: |
           ./vendor/bin/spc build --build-micro phar
 
-      # Package the launcher as a phar file.
-      - run: composer build:phar
-
-      # Combine the minimal PHP interpreter with the launcher phar.
-      - run: ./vendor/bin/spc micro:combine launcher.phar -O ./drupal-launcher/launcher
+      # Package the launcher as a phar file with the minimal PHP interpreter.
+      - name: Build standalone launcher
+        run: |
+          composer build:phar
+          ./vendor/bin/spc micro:combine launcher.phar -O ./drupal-launcher/launcher
 
       # Upload the fully built launcher.
       - uses: actions/upload-artifact@v4
