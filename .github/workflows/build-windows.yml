@@ -47,7 +47,8 @@ jobs:
           ./vendor/bin/spc build "${{ env.PHP_EXTENSIONS }}" --build-cli
           mv ./buildroot/bin/php.exe ./bin
 
-      - run: echo $(which composer)
+      # Copy the installed version of Composer into `bin`.
+      - run: cp $(which composer) ./bin
 
       # Upload the built binaries.
       - uses: actions/upload-artifact@v4

@@ -23,11 +23,11 @@ final class Browser
 
             try {
                 $command = match (PHP_OS_FAMILY) {
-                    'Linux' => "xdg-open {$url}",
-                    'Darwin' => "open {$url}",
+                    'Linux' => "xdg-open $url",
+                    'Darwin' => "open $url",
                 };
             } catch (\UnhandledMatchError) {
-                $this->io->error("Could not figure out how to open a browser. Visit {$url} to get started with Drupal CMS.");
+                $this->io->error("Could not figure out how to open a browser. Visit $url to get started with Drupal CMS.");
                 return;
             }
         }

@@ -24,14 +24,10 @@ final class Server
             return 1;
         }
 
-        $browser->open("http://{$this->host}:{$port}");
+        $hostWithPort = $this->host . ':' . $port;
+        $browser->open("http://$hostWithPort");
 
-        $command = [
-            '-S',
-            "{$this->host}:{$port}",
-            '.ht.router.php',
-        ];
-        return $this->php->execute($command)
+        return $this->php->execute(['-S', $hostWithPort, '.ht.router.php'])
             ->setWorkingDirectory($this->webRoot)
             ->setTimeout(null)
             ->run();

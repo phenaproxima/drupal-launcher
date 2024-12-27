@@ -24,7 +24,7 @@ final class Php
         $path = $this->getPath();
 
         if (is_string($command) && self::background($command)) {
-            return Process::fromShellCommandline("{$path} {$command}", timeout: null);
+            return Process::fromShellCommandline("$path $command", timeout: null);
         } else {
             return new Process([$path, ...(array) $command]);
         }

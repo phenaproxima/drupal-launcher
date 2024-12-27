@@ -50,7 +50,7 @@ final class Launcher
         $command = [
             'config',
             'extra.drupal-scaffold.locations.web-root',
-            "--working-dir={$projectRoot}",
+            "--working-dir=$projectRoot",
         ];
         $webRoot = $composer->execute($command)->mustRun()->getOutput();
         $webRoot = trim($webRoot);
