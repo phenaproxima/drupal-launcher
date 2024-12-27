@@ -1,0 +1,69 @@
+# Builds a Drupal 11-ready PHP interpreter for macOS.
+# The built interpreter only supports the CLI SAPI and a hard-coded list
+# of extensions needed for running Drupal and Composer.
+# Forked from https://raw.githubusercontent.com/crazywhalecc/static-php-cli/refs/heads/main/.github/workflows/build-macos-aarch64.yml.
+# See https://www.drupal.org/docs/getting-started/system-requirements/php-requirements#extensions
+name: Build for macOS
+
+on:
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  PHP_EXTENSIONS: bz2,ctype,curl,dom,filter,gd,iconv,mbstring,opcache,openssl,pcntl,pdo,pdo_sqlite,phar,posix,session,simplexml,sodium,sqlite3,tokenizer,xml,xmlwriter,yaml,zip,zlib
+  PHP_VERSION: 8.3
+
+jobs:
+  build:
+    name: Build for macOS
+    strategy:
+      matrix:
+        os:
+          - macos-13  # x86_64
+          - macos-14  # arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install missing packages need to build PHP.
+      - run: brew install automake coreutils gzip
+
+      - name: "Set up PHP"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: latest
+          tools: pecl, composer
+          extensions: curl, openssl, mbstring, tokenizer
+          ini-values: memory_limit=-1
+
+      - run: composer install
+
+      - name: Generate hashed key for download cache
+        run: |
+          INPUT_HASH=$(echo "${{ runner.os }}-${{ env.PHP_VERSION }}-${{ env.PHP_EXTENSIONS }}" | sha256sum | awk '{print $1}')
+          echo "INPUT_HASH=${INPUT_HASH}" >> $GITHUB_ENV
+
+      # Cache downloaded source code for PHP's dependencies.
+      - id: cache-download
+        uses: actions/cache@v4
+        with:
+          path: downloads
+          key: php-${{ env.INPUT_HASH }}
+
+      # Fetch the source code for PHP's dependencies if they aren't already cached.
+      - if: steps.cache-download.outputs.cache-hit != 'true'
+        run: ./vendor/bin/spc download --with-php=${{ env.PHP_VERSION }} --for-extensions=${{ env.PHP_EXTENSIONS }} --prefer-pre-built
+
+      # Build the PHP interpreter and move it into `bin`.
+      - name: Build PHP interpreter
+        run: |
+          ./vendor/bin/spc build ${{ env.PHP_EXTENSIONS }} --build-cli
+          mv ./buildroot/bin/php ./bin
+
+      - run: echo $(which composer)
+
+      # Upload the built binaries.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ runner.os }}
+          path: bin

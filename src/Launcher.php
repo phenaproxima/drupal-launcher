@@ -18,8 +18,8 @@ final class Launcher
             new StringInput(''),
             new ConsoleOutput(),
         );
-        $php = new Php([$rootDir, 'bin', 'php'], '8.3.14', $io);
-        $composer = new Composer([$rootDir, 'bin', 'composer'], '2.8.4', $php, $io);
+        $php = new Php([$rootDir, 'bin', 'php']);
+        $composer = new Composer([$rootDir, 'bin', 'composer'], $php);
 
         $projectRoot = $rootDir . DIRECTORY_SEPARATOR . 'cms';
         if (! is_dir($projectRoot)) {

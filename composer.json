@@ -1,13 +1,12 @@
 {
     "name": "phenaproxima/drupal-launcher",
     "require": {
-        "guzzlehttp/guzzle": "^7.9",
         "symfony/process": "^7.2",
-        "symfony/filesystem": "^7.2",
         "symfony/console": "^7.2"
     },
     "require-dev": {
         "crazywhalecc/static-php-cli": "dev-main",
+        "symfony/filesystem": "^7.2",
         "symfony/finder": "^7.2"
     },
     "license": "MIT",
@@ -28,15 +27,14 @@
             "@composer dump-autoload"
         ],
         "build:php": [
-            "@putenv PHP_EXTENSIONS=curl,phar",
-            "test -d source || spc download --with-php=8.3 --for-extensions \"$PHP_EXTENSIONS\" --prefer-pre-built",
-            "test -d buildroot || spc build --build-cli --build-micro \"$PHP_EXTENSIONS\""
+            "test -d source || spc download --with-php=8.3 --prefer-pre-built --for-extensions=phar",
+            "test -d buildroot || spc build --build-micro phar"
         ],
         "build:native": [
             "@build:phar",
             "@build:php",
             "spc micro:combine launcher.phar -O launcher"
         ],
-        "reset": "rm -r -f bin cms"
+        "reset": "rm -r -f cms"
     }
 }
