@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "53eb5ffefb129baa207f544c48d8a092",
+    "content-hash": "97f03d19894ea03d37e2cbf8263e3c88",
     "packages": [
         {
             "name": "psr/container",
@@ -171,12 +171,12 @@
             },
             "type": "library",
             "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/contracts",
+                    "name": "symfony/contracts"
+                },
                 "branch-alias": {
                     "dev-main": "3.5-dev"
-                },
-                "thanks": {
-                    "name": "symfony/contracts",
-                    "url": "https://github.com/symfony/contracts"
                 }
             },
             "autoload": {
@@ -622,12 +622,12 @@
             },
             "type": "library",
             "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/contracts",
+                    "name": "symfony/contracts"
+                },
                 "branch-alias": {
                     "dev-main": "3.5-dev"
-                },
-                "thanks": {
-                    "name": "symfony/contracts",
-                    "url": "https://github.com/symfony/contracts"
                 }
             },
             "autoload": {
@@ -772,16 +772,16 @@
     "packages-dev": [
         {
             "name": "crazywhalecc/static-php-cli",
-            "version": "dev-main",
+            "version": "2.4.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/crazywhalecc/static-php-cli.git",
-                "reference": "78aea56de479f9818843ab851a6fe5f51e9998d7"
+                "reference": "4b16631d45a57370b4747df15c8f105130e96d03"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/crazywhalecc/static-php-cli/zipball/78aea56de479f9818843ab851a6fe5f51e9998d7",
-                "reference": "78aea56de479f9818843ab851a6fe5f51e9998d7",
+                "url": "https://api.github.com/repos/crazywhalecc/static-php-cli/zipball/4b16631d45a57370b4747df15c8f105130e96d03",
+                "reference": "4b16631d45a57370b4747df15c8f105130e96d03",
                 "shasum": ""
             },
             "require": {
@@ -801,7 +801,6 @@
                 "phpstan/phpstan": "^1.10",
                 "phpunit/phpunit": "^10.3 || ^9.5"
             },
-            "default-branch": true,
             "bin": [
                 "bin/spc"
             ],
@@ -828,7 +827,7 @@
             "description": "Build single static PHP binary, with PHP project together, with popular extensions included.",
             "support": {
                 "issues": "https://github.com/crazywhalecc/static-php-cli/issues",
-                "source": "https://github.com/crazywhalecc/static-php-cli/tree/main"
+                "source": "https://github.com/crazywhalecc/static-php-cli/tree/2.4.3"
             },
             "funding": [
                 {
@@ -836,7 +835,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2024-12-20T04:18:34+00:00"
+            "time": "2024-12-24T14:06:31+00:00"
         },
         {
             "name": "illuminate/collections",
@@ -1395,9 +1394,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "crazywhalecc/static-php-cli": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {},

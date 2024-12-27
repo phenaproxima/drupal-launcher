@@ -97,7 +97,7 @@ if (! is_dir($projectRoot)) {
     if ($flags) {
         array_push($command, ...explode(' ', $flags));
     }
-    new Process($command)
+    (new Process($command))
         ->setTimeout(300)
         ->setWorkingDirectory($rootDir)
         ->mustRun(function (string $type, string $buffer) use ($io): void {
@@ -112,7 +112,7 @@ $command = [
     'extra.drupal-scaffold.locations.web-root',
     "--working-dir=$projectRoot",
 ];
-$webRoot = new Process($command)->mustRun()->getOutput();
+$webRoot = (new Process($command))->mustRun()->getOutput();
 $webRoot = trim($webRoot);
 
 $host = '127.0.0.1';
@@ -126,7 +126,7 @@ if ($port === false) {
 $host .= ":$port";
 _open_browser('http://' . $host, $io);
 
-return new Process([$php, '-S', $host, '.ht.router.php'])
+return (new Process([$php, '-S', $host, '.ht.router.php']))
     ->setWorkingDirectory($projectRoot . DIRECTORY_SEPARATOR . $webRoot)
     ->setTimeout(null)
     ->run();

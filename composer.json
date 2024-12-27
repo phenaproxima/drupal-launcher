@@ -5,7 +5,7 @@
         "symfony/console": "^7.2"
     },
     "require-dev": {
-        "crazywhalecc/static-php-cli": "dev-main",
+        "crazywhalecc/static-php-cli": "^2.4.3",
         "symfony/filesystem": "^7.2",
         "symfony/finder": "^7.2"
     },
