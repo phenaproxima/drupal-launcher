@@ -6,7 +6,6 @@ use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Style\StyleInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Process\PhpProcess;
 use Symfony\Component\Process\Process;
 
@@ -65,8 +64,10 @@ function _find_port(string $host): int|false
 
 $rootDir = getcwd();
 
-$dotenv = new Dotenv();
-$dotenv->load($rootDir . '/.env');
+$settings = $rootDir . DIRECTORY_SEPARATOR . 'launcher.ini';
+if (file_exists($settings)) {
+    $settings = parse_ini_file($settings, true);
+}
 
 $io = new SymfonyStyle(
     new StringInput(''),
@@ -80,8 +81,8 @@ if (PHP_OS_FAMILY === 'Windows') {
 
 $composer = implode(DIRECTORY_SEPARATOR, [$rootDir, 'bin', 'composer']);
 
-$package = getenv('LAUNCHER_TEMPLATE') ?: 'drupal/recommended-project';
-$projectDir = getenv('LAUNCHER_DIR') ?: 'drupal';
+$package = $settings['project']['template'] ?? 'drupal/recommended-project';
+$projectDir = $settings['project']['dir'] ?? 'drupal';
 $projectRoot = $rootDir . DIRECTORY_SEPARATOR . $projectDir;
 
 if (! is_dir($projectRoot)) {
@@ -92,7 +93,7 @@ if (! is_dir($projectRoot)) {
         $package,
         $projectDir,
     ];
-    $flags = getenv('LAUNCHER_FLAGS');
+    $flags = $settings['project']['flags'] ?? null;
     if ($flags) {
         $command = array_merge($command, ...explode(' ', $flags));
     }
