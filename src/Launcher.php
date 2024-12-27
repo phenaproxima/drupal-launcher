@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\Process\Process;
 
 final class Launcher
 {
@@ -22,8 +23,13 @@ final class Launcher
             new StringInput(''),
             new ConsoleOutput(),
         );
-        $php = new Php([$rootDir, 'bin', 'php']);
-        $composer = new Composer([$rootDir, 'bin', 'composer'], $php);
+
+        $php = implode(DIRECTORY_SEPARATOR, [$rootDir, 'bin', 'php']);
+        if (PHP_OS_FAMILY === 'Windows') {
+            $php .= '.exe';
+        }
+
+        $composer = implode(DIRECTORY_SEPARATOR, [$rootDir, 'bin', 'composer']);
 
         $package = getenv('LAUNCHER_TEMPLATE') ?: 'drupal/recommended-project';
         $projectDir = getenv('LAUNCHER_DIR') ?: 'drupal';
@@ -31,6 +37,8 @@ final class Launcher
 
         if (! is_dir($projectRoot)) {
             $command = [
+                $php,
+                $composer,
                 'create-project',
                 $package,
                 $projectDir,
@@ -39,7 +47,7 @@ final class Launcher
             if ($flags) {
                 $command = array_merge($command, ...explode(' ', $flags));
             }
-            $composer->execute($command)
+            new Process($command)
                 ->setTimeout(300)
                 ->setWorkingDirectory($rootDir)
                 ->mustRun(function (string $type, string $buffer) use ($io): void {
@@ -48,11 +56,13 @@ final class Launcher
         }
 
         $command = [
+            $php,
+            $composer,
             'config',
             'extra.drupal-scaffold.locations.web-root',
             "--working-dir=$projectRoot",
         ];
-        $webRoot = $composer->execute($command)->mustRun()->getOutput();
+        $webRoot = new Process($command)->mustRun()->getOutput();
         $webRoot = trim($webRoot);
 
         $server = new Server($projectRoot . DIRECTORY_SEPARATOR . $webRoot, $php, '127.0.0.1', $io);

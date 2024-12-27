@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Drupal\Launcher;
 
 use Symfony\Component\Console\Style\StyleInterface;
+use Symfony\Component\Process\Process;
 
 final class Server
 {
     public function __construct(
         private readonly string $webRoot,
-        private readonly Php $php,
+        private readonly string $php,
         private readonly string $host,
         private readonly StyleInterface $io,
     ) {}
@@ -27,7 +28,13 @@ final class Server
         $hostWithPort = $this->host . ':' . $port;
         $browser->open("http://$hostWithPort");
 
-        return $this->php->execute(['-S', $hostWithPort, '.ht.router.php'])
+        $command = [
+            $this->php,
+            '-S',
+            $hostWithPort,
+            '.ht.router.php',
+        ];
+        return new Process($command)
             ->setWorkingDirectory($this->webRoot)
             ->setTimeout(null)
             ->run();

@@ -39,7 +39,7 @@ final class Browser
         // Need to escape double quotes in the command so the PHP will work.
         $command = str_replace('"', '\"', $command);
         // Sleep for 2 seconds before opening the browser. This allows the command
-        // to start up the PHP built-in webserver in the meantime. We use a
+        // to start up the PHP built-in web server in the meantime. We use a
         // PhpProcess so that Windows powershell users also get a browser opened
         // for them.
         $process = new PhpProcess("<?php sleep(2); passthru(\"$command\"); ?>");
