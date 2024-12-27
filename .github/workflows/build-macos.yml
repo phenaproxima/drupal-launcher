@@ -1,0 +1,74 @@
+name: Build for macOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  runtime-arm64:
+    uses: ./.github/workflows/runtime-macos.yml
+    with:
+      runner: macos-14
+
+  runtime-x86_64:
+    uses: ./.github/workflows/runtime-macos.yml
+    with:
+      runner: macos-13
+
+  build:
+    name: Build for arm64
+    runs-on: macos-14
+    needs:
+      - runtime-arm64
+      - runtime-x86_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download PHP interpreter binaries for arm64
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ needs.build-runtime-arm64.outputs.run_id }}
+
+      - name: Download PHP interpreter binaries for x86_64
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ needs.build-runtime-x86_64.outputs.run_id }}
+
+      - name: "Set up PHP"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: latest
+          tools: pecl, composer
+          extensions: curl, openssl, mbstring, tokenizer
+          ini-values: memory_limit=-1
+
+      - id: cache-composer
+        name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - if: steps.cache-composer.outputs.cache-hit != 'true'
+        name: Install Composer dependencies
+        run: composer install
+
+      - name: Build standalone launcher
+        run: |
+          composer build:phar
+          ./vendor/bin/spc micro:combine launcher.phar --output=launcher-arm64 --with-micro=./bin-arm64/micro.sfx
+          ./vendor/bin/spc micro:combine launcher.phar --output=launcher-x86_64 --with-micro=./bin-x86_64/micro.sfx
+          lipo -create -output launcher launcher-arm64 launcher-x86_64
+
+      - name: Gather binaries
+        run: |
+          mkdir bin
+          cp ./bin-arm64/php ./bin/php-arm64
+          cp ./bin-x86_64/php ./bin/php-x86_64
+          cp $(which composer) ./bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drupal-launcher
+          path: |
+            bin/
+            launcher

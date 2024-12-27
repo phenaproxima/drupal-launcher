@@ -77,6 +77,8 @@ $io = new SymfonyStyle(
 $php = implode(DIRECTORY_SEPARATOR, [$rootDir, 'bin', 'php']);
 if (PHP_OS_FAMILY === 'Windows') {
     $php .= '.exe';
+} else {
+    $php .= '-' . php_uname('m');
 }
 
 $composer = implode(DIRECTORY_SEPARATOR, [$rootDir, 'bin', 'composer']);
