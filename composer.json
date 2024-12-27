@@ -11,25 +11,13 @@
     },
     "license": "MIT",
     "scripts-descriptions": {
-        "build:phar": "Builds the launcher as phar file.",
-        "build:php": "Builds the minimal PHP interpreter necesssary to execute the phar file.",
-        "build:native": "Builds the launcher as a native binary."
+        "build:phar": "Builds the launcher as phar file."
     },
     "scripts": {
         "build:phar": [
             "@composer dump-autoload --no-dev --optimize",
             "@php --define phar.readonly=0 ./build-phar.php",
             "@composer dump-autoload"
-        ],
-        "build:php": [
-            "test -d source || spc download --with-php=8.4 --prefer-pre-built --for-extensions=phar",
-            "test -d buildroot || spc build --build-micro phar"
-        ],
-        "build": [
-            "@build:phar",
-            "@build:php",
-            "spc micro:combine launcher.phar -O launcher"
-        ],
-        "reset": "rm -r -f cms"
+        ]
     }
 }

@@ -127,6 +127,6 @@ $host .= ":$port";
 _open_browser('http://' . $host, $io);
 
 return new Process([$php, '-S', $host, '.ht.router.php'])
-    ->setWorkingDirectory($projectDir . DIRECTORY_SEPARATOR . $webRoot)
+    ->setWorkingDirectory($projectRoot . DIRECTORY_SEPARATOR . $webRoot)
     ->setTimeout(null)
     ->run();
