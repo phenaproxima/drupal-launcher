@@ -35,7 +35,15 @@ jobs:
           extensions: curl, openssl, mbstring, tokenizer
           ini-values: memory_limit=-1
 
-      - run: composer install
+      # Cache Composer dependencies.
+      - id: cache-composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - if: steps.cache-composer.outputs.cache-hit != 'true'
+        run: composer install
 
       - name: Generate cache key
         run: |
