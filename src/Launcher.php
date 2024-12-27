@@ -7,12 +7,16 @@ namespace Drupal\Launcher;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Dotenv\Dotenv;
 
 final class Launcher
 {
     public static function start(): int
     {
         $rootDir = getcwd();
+
+        $dotenv = new Dotenv();
+        $dotenv->load($rootDir . '/.env');
 
         $io = new SymfonyStyle(
             new StringInput(''),
@@ -21,13 +25,20 @@ final class Launcher
         $php = new Php([$rootDir, 'bin', 'php']);
         $composer = new Composer([$rootDir, 'bin', 'composer'], $php);
 
-        $projectRoot = $rootDir . DIRECTORY_SEPARATOR . 'cms';
+        $package = getenv('LAUNCHER_TEMPLATE') ?: 'drupal/recommended-project';
+        $projectDir = getenv('LAUNCHER_DIR') ?: 'drupal';
+        $projectRoot = $rootDir . DIRECTORY_SEPARATOR . $projectDir;
+
         if (! is_dir($projectRoot)) {
             $command = [
                 'create-project',
-                'drupal/cms',
-                '--stability=rc',
+                $package,
+                $projectDir,
             ];
+            $flags = getenv('LAUNCHER_FLAGS');
+            if ($flags) {
+                $command = array_merge($command, ...explode(' ', $flags));
+            }
             $composer->execute($command)
                 ->setTimeout(300)
                 ->setWorkingDirectory($rootDir)
