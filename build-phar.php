@@ -11,14 +11,15 @@ use Symfony\Component\Finder\Finder;
 $autoloader = require_once 'vendor/autoload.php';
 
 // The phar is built with an autoloader that has no dev dependencies,
-// so we need to explicitly tell Composer where Finder is.
+// so we need to explicitly tell Composer where they are.
+$autoloader->addPsr4('Symfony\\Component\\Filesystem\\', 'vendor/symfony/filesystem');
 $autoloader->addPsr4('Symfony\\Component\\Finder\\', 'vendor/symfony/finder');
 
 $fileSystem = new Filesystem();
 
 $pharFile = 'launcher.phar';
 if (file_exists($pharFile)) {
-  $fileSystem->remove($pharFile);
+    $fileSystem->remove($pharFile);
 }
 
 $phar = new Phar($pharFile);
@@ -39,7 +40,6 @@ unset($dependencies[$my_name]);
 $finder = Finder::create()
   ->files()
   ->in([
-      'src',
       'vendor/composer',
       ...array_map(
         fn (string $path): string => Path::makeRelative($path, __DIR__),
@@ -51,9 +51,9 @@ $finder = Finder::create()
 
 $phar->buildFromIterator($finder, __DIR__);
 $phar->addFile('vendor/autoload.php');
-$phar->addFile('main.php');
+$phar->addFile('launcher.php');
 
-$phar->setStub("#!/usr/bin/env php\n" . $phar->createDefaultStub('main.php'));
+$phar->setStub("#!/usr/bin/env php\n" . $phar->createDefaultStub('launcher.php'));
 $phar->stopBuffering();
 $phar->compressFiles(Phar::GZ);
 
