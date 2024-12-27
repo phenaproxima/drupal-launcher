@@ -38,12 +38,14 @@ jobs:
 
       # Cache Composer dependencies.
       - id: cache-composer
+        name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
           path: vendor
           key: composer-${{ hashFiles('composer.lock') }}
 
       - if: steps.cache-composer.outputs.cache-hit != 'true'
+        name: Install Composer dependencies
         run: composer install
 
       - name: Generate cache key
@@ -55,6 +57,7 @@ jobs:
 
       # Cache downloaded source code for PHP's dependencies.
       - id: cache-download
+        name: Cache PHP source code
         uses: actions/cache@v4
         with:
           path: downloads
@@ -62,6 +65,7 @@ jobs:
 
       # Cache the Drupal-ready PHP interpreter.
       - id: cache-runtime
+        name: Cache Drupal-ready PHP interpreter
         uses: actions/cache@v4
         with:
           path: buildroot/bin/php
@@ -69,6 +73,7 @@ jobs:
 
       # Cache the minimal PHP interpreter.
       - id: cache-micro
+        name: Cache minimal PHP interpreter
         uses: actions/cache@v4
         with:
           path: buildroot/bin/micro.sfx
@@ -76,9 +81,8 @@ jobs:
 
       # Fetch the source code for PHP's dependencies if they aren't already cached.
       - if: steps.cache-download.outputs.cache-hit != 'true'
+        name: Download PHP source code
         run: ./vendor/bin/spc download --with-php=${{ env.PHP_VERSION }} --for-extensions=${{ env.PHP_EXTENSIONS }} --prefer-pre-built
-
-      - run: mkdir -p ./drupal-launcher/bin
 
       # Build the Drupal-ready PHP interpreter and copy it into `bin`.
       - if: steps.cache-runtime.outputs.cache-hit != 'true'
@@ -86,9 +90,6 @@ jobs:
         run: |
           ./vendor/bin/spc build ${{ env.PHP_EXTENSIONS }} --build-cli
           cp ./buildroot/bin/php ./drupal-launcher/bin
-
-      # Copy the installed version of Composer into `bin`.
-      - run: cp $(which composer) ./drupal-launcher/bin
 
       # Build the launcher's minimal PHP interpreter.
       - if: steps.cache-micro.outputs.cache-hit != 'true'
@@ -100,7 +101,14 @@ jobs:
       - name: Build standalone launcher
         run: |
           composer build:phar
-          ./vendor/bin/spc micro:combine launcher.phar -O ./drupal-launcher/launcher
+          ./vendor/bin/spc micro:combine launcher.phar -O launcher
+
+      - name: Assemble package
+        run: |
+          mkdir -p ./drupal-launcher/bin
+          cp $(which composer) ./drupal-launcher/bin
+          cp ./buildroot/bin/php ./drupal-launcher/bin
+          mv launcher ./drupal-launcher
 
       # Upload the fully built launcher.
       - uses: actions/upload-artifact@v4
