@@ -57,13 +57,25 @@ func main() {
     // If the Drupal code base isn't already there, use Composer to set it up.
 	_, e = os.Stat(projectRoot)
 	if e != nil && os.IsNotExist(e) {
-        fmt.Println("Installing dependencies. This may take a few minutes, but only needs to be done once.")
+        fmt.Println("Initializing the project...")
 
-		e = exec.Command(composerBin, "create-project", "drupal/recommended-project", path.Base(projectRoot)).Run()
-		// If we couldn't install dependencies, we're screwed.
+		e = exec.Command(composerBin, "create-project", "drupal/recommended-project", path.Base(projectRoot), "--no-install").Run()
+		// If we couldn't create the project, we're screwed.
 		if e != nil {
             panic(e)
 		}
+	}
+
+	lockFile := path.Join(projectRoot, "composer.lock")
+	_, e = os.Stat(lockFile)
+	if e != nil && os.IsNotExist(e) {
+        fmt.Println("Installing dependencies. This may take a few minutes, but only needs to be done once.")
+
+        e = exec.Command(composerBin, "install", "--working-dir=" + projectRoot).Run()
+        // If we couldn't install dependencies, we're screwed.
+        if e != nil {
+            panic(e)
+        }
 	}
 
 	var port int
