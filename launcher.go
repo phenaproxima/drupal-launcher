@@ -31,7 +31,7 @@ func execPhp(arguments ...string) *exec.Cmd {
 		if runtime.GOARCH == "amd64" {
 			bin += "-x86_64"
 		} else {
-			bin += "-arm64"
+			bin += "-aarch64"
 		}
 	} else if runtime.GOOS == "windows" {
 		bin += ".exe"

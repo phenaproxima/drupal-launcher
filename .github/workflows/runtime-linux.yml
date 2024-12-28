@@ -61,10 +61,8 @@ jobs:
 
       # Build the minimal and Drupal-ready PHP interpreters.
       - if: steps.cache.outputs.cache-hit != 'true'
-        name: Build PHP interpreters
-        run: |
-          ./bin/spc-alpine-docker build ${{ env.PHP_EXTENSIONS }} --build-cli
-          ./bin/spc-alpine-docker build --build-micro phar
+        name: Build PHP interpreter
+        run: ./bin/spc-alpine-docker build ${{ env.PHP_EXTENSIONS }} --build-cli
 
       # Upload the built interpreters.
       - uses: actions/upload-artifact@v4
