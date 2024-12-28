@@ -14,18 +14,12 @@ import (
 	"time"
 )
 
-func workingDir() string {
-	dir, e := os.Getwd()
-
-	if e == nil {
-		return dir
-	} else {
-		panic("Panicking because I could not determine the current working directory.")
-	}
-}
+// I know, global variables are bad. But in this case, it makes sense.
+// We'll set it at the top of main() and not change it.
+var workingDir string
 
 func execPhp(arguments ...string) *exec.Cmd {
-	bin := path.Join(workingDir(), "bin", "php")
+	bin := path.Join(workingDir, "bin", "php")
 
 	if runtime.GOOS == "linux" {
 		if runtime.GOARCH == "amd64" {
@@ -41,15 +35,15 @@ func execPhp(arguments ...string) *exec.Cmd {
 }
 
 func execComposer(arguments ...string) *exec.Cmd {
-	bin := path.Join(workingDir(), "bin", "composer")
+	bin := path.Join(workingDir, "bin", "composer")
 
-	phpArguments := append([]string{bin}, arguments...)
+	phpArguments := append([]string{ bin }, arguments...)
 
 	return execPhp(phpArguments...)
 }
 
 func getWebRoot(projectRoot string) (string, error) {
-	output, e := execComposer("config", "extra.drupal-scaffold.locations.web-root", "--working-dir="+projectRoot).Output()
+	output, e := execComposer("config", "extra.drupal-scaffold.locations.web-root", "--working-dir=" + projectRoot).Output()
 
 	if e == nil {
 		webRoot := string(output)
@@ -80,7 +74,7 @@ func findAvailablePort() (int, error) {
 	return -1, errors.New("Could not find an open port.")
 }
 
-func openBrowser(url string) {
+func openBrowser(url string) error {
 	var bin string
 	var e error
 
@@ -91,36 +85,36 @@ func openBrowser(url string) {
 	} else if runtime.GOOS == "darwin" {
 		bin, e = exec.LookPath("open")
 	} else {
-		e = errors.New("Cannot figure out how to open a browser on this operating system.")
-	}
-
-	if e != nil {
-		fmt.Println("Could not figure out how to open a browser. Visit " + url + " to get started.")
-		return
+		return errors.New("Could not figure out how to open a browser. Visit " + url + " to get started.")
 	}
 
 	env := os.Environ()
 	binName := path.Base(bin)
 
 	if runtime.GOOS == "windows" {
-		syscall.Exec(bin, []string{binName, "\"web\"", "\"" + url + "\""}, env)
+		syscall.Exec(bin, []string{ binName, "\"web\"", "\"" + url + "\"" }, env)
 	} else {
-		syscall.Exec(bin, []string{binName, url}, env)
+		syscall.Exec(bin, []string{ binName, url }, env)
 	}
 }
 
 func main() {
+    // Any errors we encounter along the way will go into this variable.
 	var e error
 
-	// @todo Make these configurable by an easily parsed config file
-	const template string = "drupal/recommended-project"
-	const projectDir string = "drupal"
+    // Set this global variable once. I know Globals Are Bad but eh...it
+    // makes sense in this case.
+	workingDir, e = os.Getwd()
+	if e != nil {
+	    panic("Panicking because I could not figure out the current working directory.")
+	}
 
-	projectRoot := path.Join(workingDir(), projectDir)
+	projectRoot := path.Join(workingDir, "drupal")
 
+    // If the Drupal code base isn't already there, use Composer to spin it up.
 	_, e = os.Stat(projectRoot)
 	if e != nil && os.IsNotExist(e) {
-		cmd := execComposer("create-project", template, projectDir)
+		cmd := execComposer("create-project", "drupal/recommended-project", path.Base(projectRoot))
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Run()
@@ -128,30 +122,37 @@ func main() {
 
 	var webRoot string
 	webRoot, e = getWebRoot(projectRoot)
-
 	if e != nil {
-		panic("Panicking because I could not determine the web root of the project.")
+        fmt.Println("Could not figure out the web root, so I'm assuming it's the same as the project root.")
+        webRoot = path.Base(projectRoot)
 	}
 
 	var port int
 	port, e = findAvailablePort()
 	if e != nil {
-		fmt.Println(e)
-		return
+        // Can't continue if we can't find an open port.
+        panic(e)
 	}
 
 	url := "localhost:" + strconv.Itoa(port)
 
+    // Start the built-in PHP web server, which is apparently spawned into a
+    // separate process that can outlive this one.
 	server := execPhp("-S", url, ".ht.router.php")
+	// The server needs to be run in the web root.
 	server.Dir = path.Join(projectRoot, webRoot)
 	e = server.Start()
-
 	if e == nil {
 		fmt.Println("The built-in PHP web server is running on port", port)
 	} else {
-		fmt.Println(e)
+        // Couldn't start the server, so we're sorta screwed.
+	    panic(e)
 	}
 
+    // Give the server a couple of seconds to start up.
 	time.Sleep(2 * time.Second)
-	openBrowser("http://" + url)
+	e = openBrowser("http://" + url)
+	if e != nil {
+	    fmt.Println(e)
+	}
 }
