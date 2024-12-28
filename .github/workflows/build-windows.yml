@@ -8,22 +8,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  runtime:
-    uses: ./.github/workflows/runtime-windows.yml
+  php:
+    name: Build PHP
+    uses: ./.github/workflows/php-windows.yml
 
   build:
-    name: Build for Windows
+    name: Build launcher
     runs-on: windows-latest
     needs:
-      - runtime
+      - php
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download PHP interpreter binaries
+      - name: Download PHP interpreter
         uses: actions/download-artifact@v4
         with:
-          path: runtime
-          run-id: ${{ needs.runtime.outputs.run_id }}
+          path: php
+          run-id: ${{ needs.php.outputs.run_id }}
 
       - name: "Set up Go"
         uses: actions/setup-go@v5
@@ -46,7 +47,7 @@ jobs:
         shell: bash
         run: |
           mkdir bin
-          cp ./runtime/bin/php.exe ./bin
+          cp ./php/bin/php.exe ./bin
           cp $(which composer) ./bin
 
       - uses: actions/upload-artifact@v4

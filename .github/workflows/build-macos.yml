@@ -8,34 +8,36 @@ on:
   workflow_dispatch:
 
 jobs:
-  runtime-arm64:
-    uses: ./.github/workflows/runtime-macos.yml
+  php-arm64:
+    name: Build PHP for arm64
+    uses: ./.github/workflows/php-macos.yml
     with:
       runner: macos-14
 
-  runtime-x86_64:
-    uses: ./.github/workflows/runtime-macos.yml
+  php-x86_64:
+    name: Build PHP for x86_64
+    uses: ./.github/workflows/php-macos.yml
     with:
       runner: macos-13
 
   build:
-    name: Build for macOS
+    name: Build launcher
     runs-on: macos-14
     needs:
-      - runtime-arm64
-      - runtime-x86_64
+      - php-arm64
+      - php-x86_64
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download PHP interpreter binaries for arm64
+      - name: Download PHP interpreter for arm64
         uses: actions/download-artifact@v4
         with:
-          run-id: ${{ needs.runtime-arm64.outputs.run_id }}
+          run-id: ${{ needs.php-arm64.outputs.run_id }}
 
-      - name: Download PHP interpreter binaries for x86_64
+      - name: Download PHP interpreter for x86_64
         uses: actions/download-artifact@v4
         with:
-          run-id: ${{ needs.runtime-x86_64.outputs.run_id }}
+          run-id: ${{ needs.php-x86_64.outputs.run_id }}
 
       - name: "Set up Go"
         uses: actions/setup-go@v5
