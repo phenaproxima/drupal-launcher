@@ -14,48 +14,6 @@ import (
 	"time"
 )
 
-// I know, global variables are bad. But in this case, it makes sense.
-// We'll set it at the top of main() and not change it.
-var workingDir string
-
-func execPhp(arguments ...string) *exec.Cmd {
-	bin := path.Join(workingDir, "bin", "php")
-
-	if runtime.GOOS == "linux" {
-		if runtime.GOARCH == "amd64" {
-			bin += "-x86_64"
-		} else {
-			bin += "-aarch64"
-		}
-	} else if runtime.GOOS == "windows" {
-		bin += ".exe"
-	}
-
-	return exec.Command(bin, arguments...)
-}
-
-func execComposer(arguments ...string) *exec.Cmd {
-	bin := path.Join(workingDir, "bin", "composer")
-
-	phpArguments := append([]string{ bin }, arguments...)
-
-	return execPhp(phpArguments...)
-}
-
-func getWebRoot(projectRoot string) (string, error) {
-	output, e := execComposer("config", "extra.drupal-scaffold.locations.web-root", "--working-dir=" + projectRoot).Output()
-
-	if e == nil {
-		webRoot := string(output)
-		webRoot = strings.TrimSpace(webRoot)
-		webRoot = strings.TrimRight(webRoot, "/")
-
-		return webRoot, nil
-	} else {
-		return ".", e
-	}
-}
-
 func findAvailablePort() (int, error) {
 	var portString string
 
@@ -74,53 +32,38 @@ func findAvailablePort() (int, error) {
 	return -1, errors.New("Could not find an open port.")
 }
 
-func openBrowser(url string) {
-	var bin string
-	var e error
-
-	if runtime.GOOS == "windows" {
-		bin, e = exec.LookPath("start")
-	} else if runtime.GOOS == "linux" {
-		bin, e = exec.LookPath("xdg-open")
-	} else if runtime.GOOS == "darwin" {
-		bin, e = exec.LookPath("open")
-	} else {
-		e = errors.New("Could not figure out how to open a browser. Visit " + url + " to get started.")
-	}
-
-	if e != nil {
-        fmt.Println(e)
-	    return
-	}
-
-	env := os.Environ()
-	binName := path.Base(bin)
-
-	if runtime.GOOS == "windows" {
-		syscall.Exec(bin, []string{ binName, "\"web\"", "\"" + url + "\"" }, env)
-	} else {
-		syscall.Exec(bin, []string{ binName, url }, env)
-	}
-}
-
 func main() {
+	var workingDir string
     // Any errors we encounter along the way will go into this variable.
 	var e error
 
-    // Set this global variable once. I know Globals Are Bad but eh...it
-    // makes sense in this case.
-	workingDir, e = os.Getwd()
-	if e != nil {
-	    panic("Panicking because I could not figure out the current working directory.")
+	me, e := os.Executable()
+	if e == nil {
+	    workingDir = path.Dir(me)
+    } else {
+        // We can't continue if we don't know the path to the running executable.
+	    panic(e)
 	}
 
+    // Figure out the full paths of the PHP interpreter, Composer, and
+    // the project root.
+	phpBin := path.Join(workingDir, "bin", "php")
+	if runtime.GOOS == "windows" {
+		phpBin += ".exe"
+	}
+	composerBin := path.Join(workingDir, "bin", "composer")
 	projectRoot := path.Join(workingDir, "drupal")
 
-    // If the Drupal code base isn't already there, use Composer to install it.
+    // If the Drupal code base isn't already there, use Composer to set it up.
 	_, e = os.Stat(projectRoot)
 	if e != nil && os.IsNotExist(e) {
         fmt.Println("Installing dependencies. This may take a few minutes, but only needs to be done once.")
-		execComposer("create-project", "drupal/recommended-project", path.Base(projectRoot)).Run()
+
+		e = exec.Command(composerBin, "create-project", "drupal/recommended-project", path.Base(projectRoot)).Run()
+		// If we couldn't install dependencies, we're screwed.
+		if e != nil {
+            panic(e)
+		}
 	}
 
 	var port int
@@ -132,30 +75,61 @@ func main() {
 
 	url := "localhost:" + strconv.Itoa(port)
 
-    // Start the built-in PHP web server, which is apparently spawned into a
-    // separate process that can outlive this one.
-	server := execPhp("-S", url, ".ht.router.php")
+    // Prepare to start the built-in PHP web server, which is apparently spawned
+    // into a separate process that can outlive this one.
+	server := exec.Command(phpBin, "-S", url, ".ht.router.php")
 
-	// The server needs to be run in the web root.
-	var webRoot string
-	webRoot, e = getWebRoot(projectRoot)
+	// The server needs to be run in the web root, so ask Composer where it is.
+	var output []byte
+	output, e = exec.Command(composerBin, "config", "extra.drupal-scaffold.locations.web-root", "--working-dir=" + projectRoot).Output()
 	if e == nil {
-	    server.Dir = path.Join(projectRoot, webRoot)
-	}
-	if e != nil {
+		webRoot := string(output)
+		webRoot = strings.TrimSpace(webRoot)
+		webRoot = strings.TrimRight(webRoot, "/")
+
+		server.Dir = path.Join(projectRoot, webRoot)
+	} else {
         fmt.Println("Could not figure out the web root, so I'm assuming it's the same as the project root.")
         server.Dir = projectRoot
 	}
 
 	e = server.Start()
-	if e == nil {
-		fmt.Println("The built-in PHP web server is running on port", port)
-	} else {
-        // Couldn't start the server, so we're sorta screwed.
+	if e != nil {
+        // If we couldn't start the server, we're screwed.
 	    panic(e)
 	}
 
     // Give the server a couple of seconds to start up.
 	time.Sleep(2 * time.Second)
-	openBrowser("http://" + url)
+
+	url = "http://" + url
+
+    // Figure out which utility we should use to open a browser. This varies by
+    // operating system. If we can't figure it out, just print the URL and exit.
+    var openerBin string
+	if runtime.GOOS == "windows" {
+		openerBin, e = exec.LookPath("start")
+	} else if runtime.GOOS == "linux" {
+		openerBin, e = exec.LookPath("xdg-open")
+	} else if runtime.GOOS == "darwin" {
+		openerBin, e = exec.LookPath("open")
+	} else {
+        e = errors.New("Unsupported operating system.")
+	}
+
+	if e != nil {
+		fmt.Println("Drupal is up and running! Visit", url, "to get started.")
+	    return
+	}
+
+	env := os.Environ()
+	openerName := path.Base(openerBin)
+    // According to https://gobyexample.com/execing-processes, this will terminate
+    // the launcher and transfer control to the opener utility. Perfect -- we're
+    // done anyway.
+	if runtime.GOOS == "windows" {
+		syscall.Exec(openerBin, []string{ openerName, "\"web\"", "\"" + url + "\"" }, env)
+	} else {
+		syscall.Exec(openerBin, []string{ openerName, url }, env)
+	}
 }
