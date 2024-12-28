@@ -74,7 +74,7 @@ func findAvailablePort() (int, error) {
 	return -1, errors.New("Could not find an open port.")
 }
 
-func openBrowser(url string) error {
+func openBrowser(url string) {
 	var bin string
 	var e error
 
@@ -85,7 +85,12 @@ func openBrowser(url string) error {
 	} else if runtime.GOOS == "darwin" {
 		bin, e = exec.LookPath("open")
 	} else {
-		return errors.New("Could not figure out how to open a browser. Visit " + url + " to get started.")
+		e = errors.New("Could not figure out how to open a browser. Visit " + url + " to get started.")
+	}
+
+	if e != nil {
+        fmt.Println(e)
+	    return
 	}
 
 	env := os.Environ()
@@ -151,8 +156,5 @@ func main() {
 
     // Give the server a couple of seconds to start up.
 	time.Sleep(2 * time.Second)
-	e = openBrowser("http://" + url)
-	if e != nil {
-	    fmt.Println(e)
-	}
+	openBrowser("http://" + url)
 }
