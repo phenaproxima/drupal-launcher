@@ -43,8 +43,6 @@ jobs:
         with:
           php-version: latest
           tools: composer
-          extensions: curl, openssl, mbstring, tokenizer
-          ini-values: memory_limit=-1
 
       - name: Build launcher
         env:

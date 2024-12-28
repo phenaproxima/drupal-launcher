@@ -1,0 +1,53 @@
+name: Build for Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  runtime:
+    uses: ./.github/workflows/runtime-windows.yml
+
+  build:
+    name: Build for Windows
+    runs-on: windows-latest
+    needs:
+      - runtime
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download PHP interpreter binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: runtime
+          run-id: ${{ needs.runtime.outputs.run_id }}
+
+      - name: "Set up Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.4'
+
+      - name: "Set up PHP"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: latest
+          tools: composer
+
+      - name: Build launcher
+        env:
+          GOOS: windows
+          GOARCH: amd64
+        run: go build -o launcher.exe launcher.go
+
+      - name: Gather binaries
+        shell: bash
+        run: |
+          mkdir bin
+          cp ./runtime/bin/php.exe ./bin
+          cp $(which composer) ./bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drupal-launcher
+          path: |
+            bin/
+            launcher.exe

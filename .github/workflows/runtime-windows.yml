@@ -25,7 +25,7 @@ jobs:
       - name: Generate cache key
         shell: bash
         run: |
-          CACHE_KEY=$(echo "${{ runner.os }}-${{ env.PHP_VERSION }}-${{ env.PHP_EXTENSIONS }}" | sha256sum | awk '{print $1}')
+          CACHE_KEY=${{ runner.os }}-$PHP_VERSION-$(echo $PHP_EXTENSIONS | tr ',' '-')
           echo "CACHE_KEY=${CACHE_KEY}" >> "$GITHUB_ENV"
 
       # Cache the built binaries so we can skip the build steps if there is a cache hit.
@@ -38,7 +38,7 @@ jobs:
 
       - if: steps.cache.outputs.cache-hit != 'true'
         name: Install Composer dependencies
-        run: composer install
+        run: composer install --no-dev
 
       - if: steps.cache.outputs.cache-hit != 'true'
         run: ./bin/spc doctor
