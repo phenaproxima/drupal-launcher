@@ -116,20 +116,11 @@ func main() {
 
 	projectRoot := path.Join(workingDir, "drupal")
 
-    // If the Drupal code base isn't already there, use Composer to spin it up.
+    // If the Drupal code base isn't already there, use Composer to install it.
 	_, e = os.Stat(projectRoot)
 	if e != nil && os.IsNotExist(e) {
-		cmd := execComposer("create-project", "drupal/recommended-project", path.Base(projectRoot))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Run()
-	}
-
-	var webRoot string
-	webRoot, e = getWebRoot(projectRoot)
-	if e != nil {
-        fmt.Println("Could not figure out the web root, so I'm assuming it's the same as the project root.")
-        webRoot = path.Base(projectRoot)
+        fmt.Println("Installing dependencies. This may take a few minutes, but only needs to be done once.")
+		execComposer("create-project", "drupal/recommended-project", path.Base(projectRoot)).Run()
 	}
 
 	var port int
@@ -144,8 +135,18 @@ func main() {
     // Start the built-in PHP web server, which is apparently spawned into a
     // separate process that can outlive this one.
 	server := execPhp("-S", url, ".ht.router.php")
+
 	// The server needs to be run in the web root.
-	server.Dir = path.Join(projectRoot, webRoot)
+	var webRoot string
+	webRoot, e = getWebRoot(projectRoot)
+	if e == nil {
+	    server.Dir = path.Join(projectRoot, webRoot)
+	}
+	if e != nil {
+        fmt.Println("Could not figure out the web root, so I'm assuming it's the same as the project root.")
+        server.Dir = projectRoot
+	}
+
 	e = server.Start()
 	if e == nil {
 		fmt.Println("The built-in PHP web server is running on port", port)
