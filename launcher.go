@@ -27,15 +27,16 @@ func workingDir() string {
 func execPhp(arguments ...string) *exec.Cmd {
 	bin := path.Join(workingDir(), "bin", "php")
 
-	if runtime.GOARCH == "amd64" {
-		bin += "-x86_64"
-	} else {
-		bin += "-arm64"
-	}
-
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "linux" {
+		if runtime.GOARCH == "amd64" {
+			bin += "-x86_64"
+		} else {
+			bin += "-arm64"
+		}
+	} else if runtime.GOOS == "windows" {
 		bin += ".exe"
 	}
+
 	return exec.Command(bin, arguments...)
 }
 
@@ -47,7 +48,7 @@ func execComposer(arguments ...string) *exec.Cmd {
 	return execPhp(phpArguments...)
 }
 
-func webRoot(projectRoot string) (string, error) {
+func getWebRoot(projectRoot string) (string, error) {
 	output, e := execComposer("config", "extra.drupal-scaffold.locations.web-root", "--working-dir="+projectRoot).Output()
 
 	if e == nil {
@@ -109,13 +110,15 @@ func openBrowser(url string) {
 }
 
 func main() {
+	var e error
+
 	// @todo Make these configurable by an easily parsed config file
 	const template string = "drupal/recommended-project"
 	const projectDir string = "drupal"
 
 	projectRoot := path.Join(workingDir(), projectDir)
 
-	_, e := os.Stat(projectRoot)
+	_, e = os.Stat(projectRoot)
 	if e != nil && os.IsNotExist(e) {
 		cmd := execComposer("create-project", template, projectDir)
 		cmd.Stdout = os.Stdout
@@ -123,13 +126,15 @@ func main() {
 		cmd.Run()
 	}
 
-	webRoot, e := webRoot(projectRoot)
+	var webRoot string
+	webRoot, e = getWebRoot(projectRoot)
 
 	if e != nil {
 		panic("Panicking because I could not determine the web root of the project.")
 	}
 
-	port, e := findAvailablePort()
+	var port int
+	port, e = findAvailablePort()
 	if e != nil {
 		fmt.Println(e)
 		return
