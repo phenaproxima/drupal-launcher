@@ -68,7 +68,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: drupal-launcher-${{ matrix.arch }}
+          name: drupal-cms-${{ matrix.arch }}
           path: |
             bin/
             launcher

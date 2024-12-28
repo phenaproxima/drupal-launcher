@@ -65,7 +65,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: drupal-launcher
+          name: drupal-cms
           path: |
             bin/
             launcher

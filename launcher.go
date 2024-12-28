@@ -120,7 +120,7 @@ func main() {
 	_, e = os.Stat(projectRoot)
 	if e != nil && os.IsNotExist(e) {
         fmt.Println("Installing dependencies. This may take a few minutes, but only needs to be done once.")
-		execComposer("create-project", "drupal/recommended-project", path.Base(projectRoot)).Run()
+		execComposer("create-project", "drupal/cms:^1-rc2", "--stability=rc", path.Base(projectRoot)).Run()
 	}
 
 	var port int
